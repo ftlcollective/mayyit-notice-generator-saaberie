@@ -117,3 +117,15 @@ Authorised personnel can access it at the link shared privately via WhatsApp.
 
 
 *Saaberie Chishty Society — Est. 1982*
+
+## Built By
+
+**FTL Collective**
+Built and maintained by FTL Collective to simplify the notice generation process for the Bayview Muslim Burial Service team.
+
+For support or improvements, reach out to FTL Collective.
+
+-----
+
+*May Allah SWT grant all the deceased the highest stage in Jannah. Aameen.*
+
