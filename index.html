@@ -216,6 +216,27 @@
       display:flex;
     }
 
+    /* TIME CHANGE — red text below pickup time */
+    #ov-timechange {
+      font-family: "Intelo", sans-serif; font-weight: 700;
+      top:58.5%; height:3%;
+      left:72%; right:0%;
+      font-size:clamp(7px, 2.4vw, 13px);
+      color:#e60000;
+      display:flex; align-items:center; justify-content:center;
+      letter-spacing:1px; text-transform:uppercase;
+    }
+    /* IN CONJUNCTION WITH — red text below janazah location */
+    #ov-conjunction {
+      font-family: "Intelo", sans-serif; font-weight: 600;
+      top:70%; height:5%;
+      left:5%; right:40%;
+      font-size:clamp(6px, 2.2vw, 12px);
+      color:#e60000;
+      display:flex; align-items:flex-start; justify-content:flex-start;
+      padding:0 12px; line-height:1.4;
+      font-style:italic;
+    }
     @media (max-width: 700px) {
       body { padding: 12px; }
       #app { padding: 12px; gap: 16px; }
@@ -275,9 +296,15 @@
 
     <label>Pick Up Time</label>
     <select id="f-pick"></select>
+    <div class="hijri-row" style="margin-top:6px;">
+      <input type="checkbox" id="f-timechange" />
+      <label for="f-timechange" style="color:#ff4444;margin:0;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;">Show TIME CHANGE</label>
+    </div>
 
     <label>Janazah Salah At</label>
     <input type="text" id="f-janazah" placeholder="Masjid name, Area"/>
+    <label style="color:#ff8888;margin-top:8px;">In Conjunction With (optional)</label>
+    <input type="text" id="f-conjunction" placeholder="e.g. Haathiem Al Lathaat Burial Services (Cape Town)"/>
 
     <label>Janazah Time</label>
     <select id="f-time"></select>
@@ -301,6 +328,8 @@
       <div class="overlay" id="ov-pick"><span id="p-pick">TBC</span></div>
       <div class="overlay" id="ov-janazah"><span id="p-janazah"></span></div>
       <div class="overlay" id="ov-time"><span id="p-time">TBC</span></div>
+      <div class="overlay" id="ov-timechange" style="display:none;"><span>TIME CHANGE</span></div>
+      <div class="overlay" id="ov-conjunction" style="display:none;"><span id="p-conjunction"></span></div>
       <div class="overlay" id="ov-cemetery"><span id="p-proc"></span></div>
     </div>
   </div>
@@ -393,6 +422,16 @@ function generate() {
   document.getElementById('p-pick').textContent = document.getElementById('f-pick').value || 'TBC';
   document.getElementById('p-time').textContent = document.getElementById('f-time').value || 'TBC';
 
+  // TIME CHANGE
+  const tcEl = document.getElementById('ov-timechange');
+  tcEl.style.display = document.getElementById('f-timechange').checked ? 'flex' : 'none';
+
+  // IN CONJUNCTION WITH
+  const conj = document.getElementById('f-conjunction').value.trim();
+  const conjEl = document.getElementById('ov-conjunction');
+  document.getElementById('p-conjunction').textContent = conj ? 'In conjunction with ' + conj : '';
+  conjEl.style.display = conj ? 'flex' : 'none';
+
   // Janazah
   const jan = document.getElementById('f-janazah').value;
   document.getElementById('p-janazah').innerHTML = jan
@@ -460,7 +499,8 @@ const now=new Date();
 document.getElementById('f-date').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 document.getElementById('f-date').addEventListener('change',generate);
 document.getElementById('f-hijri').addEventListener('change',generate);
-['f-name','f-address','f-janazah','f-proc'].forEach(id=>document.getElementById(id).addEventListener('input',generate));
+['f-name','f-address','f-janazah','f-proc','f-conjunction'].forEach(id=>document.getElementById(id).addEventListener('input',generate));
+  document.getElementById('f-timechange').addEventListener('change',generate);
 ['f-pick','f-time'].forEach(id=>document.getElementById(id).addEventListener('change',generate));
 populateTimes();
 </script>
