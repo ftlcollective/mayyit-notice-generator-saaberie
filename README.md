@@ -110,4 +110,10 @@ Everything is self-contained in a single HTML file. No separate image files, fon
 
 ---
 
+⚠️ Note: This repository is private and not hosted via GitHub Pages.
+The live application is deployed on Netlify.
+Authorised personnel can access it at the link shared privately via WhatsApp.
+
+
+
 *Saaberie Chishty Society — Est. 1982*
