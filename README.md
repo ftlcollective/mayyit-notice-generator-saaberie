@@ -8,7 +8,7 @@ A secure, password-protected web-based generator for creating Saaberie Chishty S
 
 The generator is protected by a password gate. Only authorised personnel should have access to the password.
 
-**Password:** `SCS@Janaza2025`
+**Password:** 
 
 > Keep this password confidential. Share only via private WhatsApp to authorised members.
 
@@ -72,9 +72,9 @@ The downloaded image is exported at **3× resolution** for crisp, sharp quality 
 1. Open `index.html` in a text editor (e.g. VS Code, Notepad++)
 2. Find the line:
    ```
-   const PW = "SCS@Janaza2025";
+   const PW = "***********";
    ```
-3. Replace `SCS@Janaza2025` with your new password
+3. Replace `************` with your new password
 4. Save and re-upload to GitHub
 5. Notify authorised members of the new password
 
