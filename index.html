@@ -153,7 +153,7 @@
     #ov-name {
       font-family: "Intelo", sans-serif; font-weight: 700;
       top:46%; height:4%;
-      font-size:clamp(14px, 5.2vw, 28px);
+      font-size:clamp(16px, 5.56vw, 60px);
       color:#1a2a10; letter-spacing:0.5px; text-transform:uppercase;
       line-height:1.1; padding:0 16px;
       display:flex; align-items:center; justify-content:center;
@@ -175,9 +175,9 @@
       font-family: "Intelo", sans-serif; font-weight: 600;
       top:53%; height:8%;
       left:5%; right:40%;
-      font-size:clamp(8px, 3.0vw, 16px); color:#1a2a10;
+      font-size:clamp(9px, 3.24vw, 35px); color:#1a2a10;
       text-align:left; align-items:center; justify-content:flex-start;
-      padding:0 12px; line-height:1.55;
+      padding:0 12px; line-height:1.35;
       display:flex;
     }
 
@@ -186,7 +186,7 @@
       font-family: "Intelo", sans-serif; font-weight: 700;
       top:53%; height:8%;
       left:72%; right:0%;
-      font-size:clamp(11px, 4.1vw, 22px); color:#1a2a10;
+      font-size:clamp(12px, 4.17vw, 45px); color:#1a2a10;
       display:flex; align-items:center; justify-content:center;
       letter-spacing:0.5px;
     }
@@ -196,9 +196,9 @@
       font-family: "Intelo", sans-serif; font-weight: 600;
       top:63%; height:10%;
       left:5%; right:40%;
-      font-size:clamp(8px, 3.0vw, 16px); color:#1a2a10;
+      font-size:clamp(9px, 3.24vw, 35px); color:#1a2a10;
       text-align:left; align-items:center; justify-content:flex-start;
-      padding:0 12px; line-height:1.55;
+      padding:0 12px; line-height:1.35;
       display:flex;
     }
 
@@ -207,7 +207,7 @@
       font-family: "Intelo", sans-serif; font-weight: 700;
       top:63%; height:10%;
       left:72%; right:0%;
-      font-size:clamp(11px, 4.1vw, 22px);  color:#1a2a10;
+      font-size:clamp(12px, 4.17vw, 45px);  color:#1a2a10;
       display:flex; align-items:center; justify-content:center;
       letter-spacing:0.5px;
     }
@@ -217,7 +217,7 @@
       font-family: "Intelo", sans-serif; font-weight: 600;
       top:74%; height:2.5%;
       left:30%; right:2%;
-      font-size:clamp(8px, 3.0vw, 16px); color:#000;
+      font-size:clamp(9px, 3.24vw, 35px); color:#000;
       text-align:left; align-items:center; justify-content:flex-start;
       padding:0 10px; letter-spacing:0.5px;
       display:flex;
@@ -479,31 +479,48 @@ function autoShrink(el, maxH, startSize) {
   while(el.scrollHeight > maxH && sz > 8) { sz -= 0.5; el.style.fontSize = sz+'px'; }
 }
 
+// Shrink only if text overflows its container — lets CSS clamp() set the normal size
+function shrinkIfOverflow(el) {
+  const parent = el.closest('.overlay') || el.parentElement;
+  if (!parent) return;
+  const maxH = parent.offsetHeight;
+  if (maxH <= 0) return;
+  let sz = parseFloat(window.getComputedStyle(el).fontSize);
+  while (el.scrollHeight > maxH && sz > 6) {
+    sz -= 0.5;
+    el.style.fontSize = sz + 'px';
+  }
+}
+
 function generate() {
-  // Name — auto-shrink if very long
+  // Name
   const nameEl = document.getElementById('p-name');
   nameEl.textContent = (document.getElementById('f-name').value||'').toUpperCase();
-  nameEl.style.fontSize = '28px';
-  autoShrink(nameEl, 60, 28);
+  nameEl.style.fontSize = '';
+  shrinkIfOverflow(nameEl);
 
-  // Relations — build readable string, auto-shrink
+  // Relations
   const relEl = document.getElementById('p-rel');
-  relEl.style.fontSize = '13px';
   if(rels.length === 0) {
     relEl.textContent = '';
   } else {
-    // Format nicely: "W/O John • S/O Ahmed • D/O Sara"
     relEl.textContent = rels.join('  •  ');
   }
-  autoShrink(relEl, 44, 13);
+  relEl.style.fontSize = '';
+  shrinkIfOverflow(relEl);
 
-  // Address — newline on comma
+  // Address
   const addr = document.getElementById('f-address').value;
-  document.getElementById('p-address').innerHTML = addr
-    ? addr.replace(/,\s*/g,'<br>').toUpperCase() : '';
+  const addrEl = document.getElementById('p-address');
+  addrEl.innerHTML = addr ? addr.replace(/,\s*/g,'<br>').toUpperCase() : '';
+  addrEl.style.fontSize = '';
+  shrinkIfOverflow(addrEl);
 
-  // Times
-  document.getElementById('p-pick').textContent = document.getElementById('f-pick').value || 'TBC';
+  // Pick up time
+  const pickEl = document.getElementById('p-pick');
+  pickEl.textContent = document.getElementById('f-pick').value || 'TBC';
+  pickEl.style.fontSize = '';
+  shrinkIfOverflow(pickEl);
 
   // Janazah Time — precedence:
   // 1) If Time Update checkbox is ticked AND a time is entered → use the updated time, show TIME UPDATE label
@@ -525,7 +542,20 @@ function generate() {
     finalTime = document.getElementById('f-time').value || 'TBC';
     tuEl.style.display = 'none';
   }
-  document.getElementById('p-time').textContent = finalTime;
+  const pTimeEl = document.getElementById('p-time');
+  pTimeEl.textContent = finalTime;
+  // If salaah label is showing (not time update, not clock), use Calibri Light Italic
+  if (!tuChecked && salaahCombined) {
+    pTimeEl.style.fontFamily = '"CalibriLight", "Intelo", sans-serif';
+    pTimeEl.style.fontWeight = '300';
+    pTimeEl.style.fontStyle = 'italic';
+  } else {
+    pTimeEl.style.fontFamily = '';
+    pTimeEl.style.fontWeight = '';
+    pTimeEl.style.fontStyle = '';
+  }
+  pTimeEl.style.fontSize = '';
+  shrinkIfOverflow(pTimeEl);
 
   // TIME CHANGE
   const tcEl = document.getElementById('ov-timechange');
@@ -537,14 +567,18 @@ function generate() {
   document.getElementById('p-conjunction').textContent = conj ? 'In conjunction with ' + conj : '';
   conjEl.style.display = conj ? 'flex' : 'none';
 
-  // Janazah
+  // Janazah location
   const jan = document.getElementById('f-janazah').value;
-  document.getElementById('p-janazah').innerHTML = jan
-    ? jan.replace(/,\s*/g,'<br>').toUpperCase() : '';
+  const janEl = document.getElementById('p-janazah');
+  janEl.innerHTML = jan ? jan.replace(/,\s*/g,'<br>').toUpperCase() : '';
+  janEl.style.fontSize = '';
+  shrinkIfOverflow(janEl);
 
   // Cemetery
-  document.getElementById('p-proc').textContent =
-    (document.getElementById('f-proc').value||'').toUpperCase();
+  const procEl = document.getElementById('p-proc');
+  procEl.textContent = (document.getElementById('f-proc').value||'').toUpperCase();
+  procEl.style.fontSize = '';
+  shrinkIfOverflow(procEl);
 
   // Date
   buildDate();
