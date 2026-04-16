@@ -120,11 +120,12 @@
     .btn-dl  { background:linear-gradient(135deg,#1a4a8a,#0d2a5a); }
 
     /* PREVIEW */
-    .preview-panel { flex:1; display:flex; justify-content:center; align-items:flex-start; min-width:320px; }
+    .preview-panel { flex:1; display:flex; justify-content:center; align-items:flex-start; min-width:320px; max-width:540px; }
 
     /* NOTICE — overlay on template image */
     #notice {
       position:relative; width:100%; max-width:540px; height:0; padding-bottom:177.78%;
+      flex-shrink:0;
       font-family:'Open Sans',sans-serif;
       border-radius:6px; overflow:hidden;
       box-shadow:0 20px 60px rgba(0,0,0,0.6);
