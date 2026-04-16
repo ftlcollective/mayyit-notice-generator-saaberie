@@ -226,6 +226,16 @@
       display:flex; align-items:center; justify-content:center;
       letter-spacing:1px; text-transform:uppercase;
     }
+    /* TIME UPDATE — red text above janazah time */
+    #ov-timeupdate {
+      font-family: "Intelo", sans-serif; font-weight: 700;
+      top:60%; height:3%;
+      left:72%; right:0%;
+      font-size:clamp(7px, 2.4vw, 13px);
+      color:#e60000;
+      display:flex; align-items:center; justify-content:center;
+      letter-spacing:1px; text-transform:uppercase;
+    }
     /* IN CONJUNCTION WITH — red text below janazah location */
     #ov-conjunction {
       font-family: "Intelo", sans-serif; font-weight: 600;
@@ -266,6 +276,14 @@
   <div class="form-panel">
     <h2>✦ SCS Mayyit Notice</h2>
 
+    <label>Saved Notices</label>
+    <div class="rel-row">
+      <select id="f-notice-select" style="flex:2;"></select>
+      <button onclick="newNotice()" title="New notice" style="flex:0 0 34px;">＋</button>
+      <button onclick="deleteCurrentNotice()" title="Delete this notice" style="flex:0 0 34px;background:#a33;">🗑</button>
+    </div>
+    <input type="text" id="f-notice-label" placeholder="Notice label (auto-saves)" style="margin-top:6px;"/>
+
     <label>Date</label>
     <input type="date" id="f-date"/>
     <div class="hijri-row">
@@ -279,16 +297,33 @@
     <label>Relations (add one at a time)</label>
     <div class="rel-row">
       <select id="f-rel">
-        <option>W/O</option><option>H/O</option>
-        <option>S/O</option><option>D/O</option>
-        <option>M/O</option><option>F/O</option>
-        <option>BRO/O</option><option>SIS/O</option>
-        <option>AUNT/O</option><option>UNCLE/O</option>
-        <option>GF/O</option><option>GM/O</option>
+        <option value="Wife of">Wife of</option>
+        <option value="Husband of">Husband of</option>
+        <option value="Son of">Son of</option>
+        <option value="Daughter of">Daughter of</option>
+        <option value="Mother of">Mother of</option>
+        <option value="Father of">Father of</option>
+        <option value="Brother of">Brother of</option>
+        <option value="Sister of">Sister of</option>
+        <option value="Aunt of">Aunt of</option>
+        <option value="Uncle of">Uncle of</option>
+        <option value="Grandfather of">Grandfather of</option>
+        <option value="Grandmother of">Grandmother of</option>
+        <option value="Cousin of">Cousin of</option>
+        <option value="Mother-in-law of">Mother-in-law of</option>
+        <option value="Father-in-law of">Father-in-law of</option>
+        <option value="Brother-in-law of">Brother-in-law of</option>
+        <option value="Sister-in-law of">Sister-in-law of</option>
+        <option value="Son-in-law of">Son-in-law of</option>
+        <option value="Daughter-in-law of">Daughter-in-law of</option>
+        <option value="Nephew of">Nephew of</option>
+        <option value="Niece of">Niece of</option>
+        <option value="__custom__">Custom…</option>
       </select>
       <input type="text" id="f-rel-name" placeholder="Relative name"/>
       <button onclick="addRel()">+</button>
     </div>
+    <input type="text" id="f-rel-custom" placeholder="Custom relationship (e.g. Stepfather of)" style="display:none;margin-top:6px;"/>
     <div id="chips" class="chips"></div>
 
     <label>Will Leave From</label>
@@ -308,6 +343,30 @@
 
     <label>Janazah Time</label>
     <select id="f-time"></select>
+
+    <div class="rel-row" style="margin-top:6px;">
+      <select id="f-salaah-combined" style="flex:1;">
+        <option value="">— (no salaah timing)</option>
+        <option value="Before Fajr Salaah">Before Fajr Salaah</option>
+        <option value="After Fajr Salaah">After Fajr Salaah</option>
+        <option value="Before Zuhr Salaah">Before Zuhr Salaah</option>
+        <option value="After Zuhr Salaah">After Zuhr Salaah</option>
+        <option value="Before Asr Salaah">Before Asr Salaah</option>
+        <option value="After Asr Salaah">After Asr Salaah</option>
+        <option value="Before Maghrib Salaah">Before Maghrib Salaah</option>
+        <option value="After Maghrib Salaah">After Maghrib Salaah</option>
+        <option value="Before Esha Salaah">Before Esha Salaah</option>
+        <option value="After Esha Salaah">After Esha Salaah</option>
+        <option value="Before Jumu'ah Salaah">Before Jumu'ah Salaah</option>
+        <option value="After Jumu'ah Salaah">After Jumu'ah Salaah</option>
+      </select>
+    </div>
+
+    <div class="hijri-row" style="margin-top:8px;">
+      <input type="checkbox" id="f-timeupdate" />
+      <label for="f-timeupdate" style="color:#ff4444;margin:0;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;">Time Update</label>
+    </div>
+    <input type="time" id="f-timeupdate-value" style="display:none;margin-top:6px;"/>
 
     <label>Cemetery</label>
     <input type="text" id="f-proc" placeholder="Masjid name, Area"/>
@@ -329,6 +388,7 @@
       <div class="overlay" id="ov-janazah"><span id="p-janazah"></span></div>
       <div class="overlay" id="ov-time"><span id="p-time">TBC</span></div>
       <div class="overlay" id="ov-timechange" style="display:none;"><span>TIME CHANGE</span></div>
+      <div class="overlay" id="ov-timeupdate" style="display:none;"><span>TIME UPDATE</span></div>
       <div class="overlay" id="ov-conjunction" style="display:none;"><span id="p-conjunction"></span></div>
       <div class="overlay" id="ov-cemetery"><span id="p-proc"></span></div>
     </div>
@@ -359,15 +419,23 @@ function checkPw() {
 
 let rels = [];
 document.getElementById('f-rel-name').addEventListener('keydown', e => { if(e.key==='Enter') addRel(); });
+document.getElementById('f-rel').addEventListener('change', () => {
+  const isCustom = document.getElementById('f-rel').value === '__custom__';
+  document.getElementById('f-rel-custom').style.display = isCustom ? 'block' : 'none';
+});
 
 function addRel() {
-  const r = document.getElementById('f-rel').value;
+  const sel = document.getElementById('f-rel').value;
+  const r = sel === '__custom__'
+    ? document.getElementById('f-rel-custom').value.trim()
+    : sel;
   const n = document.getElementById('f-rel-name').value.trim();
-  if(!n) return;
+  if(!r || !n) return;
   rels.push(r + ' ' + n);
   document.getElementById('f-rel-name').value = '';
+  if(sel === '__custom__') document.getElementById('f-rel-custom').value = '';
   document.getElementById('f-rel-name').focus();
-  renderChips(); generate();
+  renderChips(); generate(); scheduleSave();
 }
 function renderChips() {
   const d = document.getElementById('chips'); d.innerHTML = '';
@@ -381,13 +449,22 @@ function renderChips() {
 }
 function editRel(i) {
   const full = rels[i], sp = full.indexOf(' ');
+  const prefix = full.substring(0,sp);
   const sel = document.getElementById('f-rel');
-  for(let o of sel.options) if(o.value===full.substring(0,sp)){sel.value=o.value;break;}
+  let matched = false;
+  for(let o of sel.options) if(o.value===prefix){ sel.value=o.value; matched = true; break; }
+  if(!matched) {
+    sel.value = '__custom__';
+    document.getElementById('f-rel-custom').style.display = 'block';
+    document.getElementById('f-rel-custom').value = prefix;
+  } else {
+    document.getElementById('f-rel-custom').style.display = sel.value === '__custom__' ? 'block' : 'none';
+  }
   document.getElementById('f-rel-name').value = full.substring(sp+1);
   delRel(i);
   document.getElementById('f-rel-name').focus();
 }
-function delRel(i) { rels.splice(i,1); renderChips(); generate(); }
+function delRel(i) { rels.splice(i,1); renderChips(); generate(); scheduleSave(); }
 
 function autoShrink(el, maxH, startSize) {
   let sz = startSize;
@@ -420,7 +497,28 @@ function generate() {
 
   // Times
   document.getElementById('p-pick').textContent = document.getElementById('f-pick').value || 'TBC';
-  document.getElementById('p-time').textContent = document.getElementById('f-time').value || 'TBC';
+
+  // Janazah Time — precedence:
+  // 1) If Time Update checkbox is ticked AND a time is entered → use the updated time, show TIME UPDATE label
+  // 2) Else if Before/After Salaah is selected → show "After Esha Salaah" style text
+  // 3) Else → use the picked clock time
+  const tuChecked = document.getElementById('f-timeupdate').checked;
+  const tuValue = document.getElementById('f-timeupdate-value').value;
+  const salaahCombined = document.getElementById('f-salaah-combined').value;
+
+  const tuEl = document.getElementById('ov-timeupdate');
+  let finalTime;
+  if (tuChecked && tuValue) {
+    finalTime = tuValue;
+    tuEl.style.display = 'flex';
+  } else if (salaahCombined) {
+    finalTime = salaahCombined;
+    tuEl.style.display = 'none';
+  } else {
+    finalTime = document.getElementById('f-time').value || 'TBC';
+    tuEl.style.display = 'none';
+  }
+  document.getElementById('p-time').textContent = finalTime;
 
   // TIME CHANGE
   const tcEl = document.getElementById('ov-timechange');
@@ -488,21 +586,254 @@ function formatAmPm(h,m) {
 }
 
 function downloadImg() {
-  html2canvas(document.getElementById('notice'),{scale:3,useCORS:true,allowTaint:true,logging:false}).then(c=>{
-    const a=document.createElement('a'); a.href=c.toDataURL('image/png');
-    a.download='scs-mayyit-notice.png'; a.click();
+  const notice = document.getElementById('notice');
+
+  // Fixed output dimensions — aspect ratio matches padding-bottom:177.78% (9:16)
+  const TARGET_WIDTH = 1080;
+  const TARGET_HEIGHT = Math.round(TARGET_WIDTH * 1.7778); // 1920
+
+  // Save current inline styles so we can restore after capture
+  const saved = {
+    width: notice.style.width,
+    maxWidth: notice.style.maxWidth,
+    height: notice.style.height,
+    paddingBottom: notice.style.paddingBottom,
+    position: notice.style.position,
+    left: notice.style.left,
+    top: notice.style.top,
+    transform: notice.style.transform,
+    zIndex: notice.style.zIndex
+  };
+
+  // Force the notice to a fixed pixel size, off-screen, so html2canvas
+  // captures the same dimensions regardless of device/viewport.
+  notice.style.width = TARGET_WIDTH + 'px';
+  notice.style.maxWidth = TARGET_WIDTH + 'px';
+  notice.style.height = TARGET_HEIGHT + 'px';
+  notice.style.paddingBottom = '0';
+  notice.style.position = 'fixed';
+  notice.style.left = '-10000px';
+  notice.style.top = '0';
+  notice.style.transform = 'none';
+  notice.style.zIndex = '-1';
+
+  html2canvas(notice, {
+    width: TARGET_WIDTH,
+    height: TARGET_HEIGHT,
+    windowWidth: TARGET_WIDTH,
+    windowHeight: TARGET_HEIGHT,
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+    backgroundColor: null
+  }).then(c => {
+    // Restore original styles
+    notice.style.width = saved.width;
+    notice.style.maxWidth = saved.maxWidth;
+    notice.style.height = saved.height;
+    notice.style.paddingBottom = saved.paddingBottom;
+    notice.style.position = saved.position;
+    notice.style.left = saved.left;
+    notice.style.top = saved.top;
+    notice.style.transform = saved.transform;
+    notice.style.zIndex = saved.zIndex;
+
+    const a = document.createElement('a');
+    a.href = c.toDataURL('image/png');
+    a.download = 'scs-mayyit-notice.png';
+    a.click();
+  }).catch(err => {
+    // Restore on error too
+    notice.style.width = saved.width;
+    notice.style.maxWidth = saved.maxWidth;
+    notice.style.height = saved.height;
+    notice.style.paddingBottom = saved.paddingBottom;
+    notice.style.position = saved.position;
+    notice.style.left = saved.left;
+    notice.style.top = saved.top;
+    notice.style.transform = saved.transform;
+    notice.style.zIndex = saved.zIndex;
+    console.error('Download failed:', err);
+    alert('Download failed. Please try again.');
   });
 }
 
-// Init
-const now=new Date();
-document.getElementById('f-date').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-document.getElementById('f-date').addEventListener('change',generate);
-document.getElementById('f-hijri').addEventListener('change',generate);
-['f-name','f-address','f-janazah','f-proc','f-conjunction'].forEach(id=>document.getElementById(id).addEventListener('input',generate));
-  document.getElementById('f-timechange').addEventListener('change',generate);
-['f-pick','f-time'].forEach(id=>document.getElementById(id).addEventListener('change',generate));
+// ===================== MULTI-NOTICE + AUTOSAVE =====================
+const STORAGE_KEY = 'scs-notices-v1';
+const ACTIVE_KEY  = 'scs-active-notice-v1';
+let currentNoticeId = null;
+let saveTimer = null;
+
+// Fields tracked for save/restore
+const SIMPLE_FIELDS = [
+  'f-date','f-hijri','f-name','f-address','f-pick','f-timechange',
+  'f-janazah','f-conjunction','f-time','f-proc',
+  'f-salaah-combined','f-timeupdate','f-timeupdate-value',
+  'f-notice-label'
+];
+
+function loadAllNotices() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveAllNotices(all) { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); }
+
+function snapshotCurrent() {
+  const snap = { rels: rels.slice(), fields: {} };
+  SIMPLE_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    snap.fields[id] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+  return snap;
+}
+
+function applySnapshot(snap) {
+  rels = (snap.rels || []).slice();
+  SIMPLE_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || !snap.fields || !(id in snap.fields)) return;
+    if (el.type === 'checkbox') el.checked = !!snap.fields[id];
+    else el.value = snap.fields[id] || '';
+  });
+  // Reveal/hide conditional inputs based on restored state
+  document.getElementById('f-timeupdate-value').style.display =
+    document.getElementById('f-timeupdate').checked ? 'block' : 'none';
+  document.getElementById('f-rel-custom').style.display =
+    document.getElementById('f-rel').value === '__custom__' ? 'block' : 'none';
+  renderChips();
+  generate();
+}
+
+function saveNow() {
+  if (!currentNoticeId) return;
+  const all = loadAllNotices();
+  const label = document.getElementById('f-notice-label').value.trim()
+             || document.getElementById('f-name').value.trim()
+             || 'Untitled notice';
+  all[currentNoticeId] = {
+    id: currentNoticeId,
+    label: label,
+    updated: Date.now(),
+    data: snapshotCurrent()
+  };
+  saveAllNotices(all);
+  localStorage.setItem(ACTIVE_KEY, currentNoticeId);
+  refreshNoticeDropdown();
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 400);
+}
+
+function refreshNoticeDropdown() {
+  const sel = document.getElementById('f-notice-select');
+  const all = loadAllNotices();
+  const ids = Object.keys(all).sort((a,b) => (all[b].updated||0) - (all[a].updated||0));
+  sel.innerHTML = '';
+  if (ids.length === 0) {
+    const o = document.createElement('option');
+    o.value = ''; o.textContent = '— no saved notices —';
+    sel.appendChild(o);
+  } else {
+    ids.forEach(id => {
+      const o = document.createElement('option');
+      o.value = id;
+      o.textContent = all[id].label || 'Untitled';
+      sel.appendChild(o);
+    });
+  }
+  if (currentNoticeId) sel.value = currentNoticeId;
+}
+
+function newNotice() {
+  currentNoticeId = 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  rels = [];
+  // Reset all fields to defaults
+  SIMPLE_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = (id === 'f-hijri'); // hijri on by default
+    else if (el.type === 'date') {
+      const n = new Date();
+      el.value = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    }
+    else el.value = '';
+  });
+  document.getElementById('f-timeupdate-value').style.display = 'none';
+  document.getElementById('f-rel-custom').style.display = 'none';
+  document.getElementById('f-notice-label').value = 'New notice ' + new Date().toLocaleString();
+  renderChips();
+  generate();
+  saveNow();
+}
+
+function loadNotice(id) {
+  const all = loadAllNotices();
+  if (!all[id]) return;
+  currentNoticeId = id;
+  localStorage.setItem(ACTIVE_KEY, id);
+  applySnapshot(all[id].data);
+  refreshNoticeDropdown();
+}
+
+function deleteCurrentNotice() {
+  if (!currentNoticeId) return;
+  if (!confirm('Delete this notice? This cannot be undone.')) return;
+  const all = loadAllNotices();
+  delete all[currentNoticeId];
+  saveAllNotices(all);
+  const remaining = Object.keys(all);
+  if (remaining.length > 0) loadNotice(remaining[0]);
+  else newNotice();
+}
+
+// ===================== EVENT WIRING =====================
+const now = new Date();
+document.getElementById('f-date').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+// Regenerate + autosave on every change
+const TEXT_INPUTS = ['f-name','f-address','f-janazah','f-proc','f-conjunction',
+                     'f-notice-label'];
+TEXT_INPUTS.forEach(id => document.getElementById(id).addEventListener('input', () => { generate(); scheduleSave(); }));
+
+const CHANGE_INPUTS = ['f-date','f-hijri','f-pick','f-time','f-timechange',
+                       'f-salaah-combined','f-timeupdate-value'];
+CHANGE_INPUTS.forEach(id => document.getElementById(id).addEventListener('change', () => { generate(); scheduleSave(); }));
+
+// Time Update checkbox — show/hide time input
+document.getElementById('f-timeupdate').addEventListener('change', e => {
+  document.getElementById('f-timeupdate-value').style.display = e.target.checked ? 'block' : 'none';
+  generate();
+  scheduleSave();
+});
+
+// Custom relationship text input — autosave on typing
+document.getElementById('f-rel-custom').addEventListener('input', scheduleSave);
+
+// Notice dropdown switcher
+document.getElementById('f-notice-select').addEventListener('change', e => {
+  if (e.target.value) loadNotice(e.target.value);
+});
+
 populateTimes();
+
+// ===================== BOOT =====================
+// On load: restore last active notice, or create a fresh one
+(function boot() {
+  const all = loadAllNotices();
+  const active = localStorage.getItem(ACTIVE_KEY);
+  if (active && all[active]) {
+    loadNotice(active);
+  } else {
+    const ids = Object.keys(all);
+    if (ids.length > 0) loadNotice(ids[0]);
+    else newNotice();
+  }
+  refreshNoticeDropdown();
+})();
 </script>
 </body>
 </html>
