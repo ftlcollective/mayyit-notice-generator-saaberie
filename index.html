@@ -359,6 +359,51 @@
         align-items: center;
         justify-content: center;
         text-align: center;
+        cursor: move;
+        transition: outline 0.2s;
+      }
+      .overlay:hover {
+        outline: 2px dashed rgba(74, 144, 226, 0.5);
+      }
+      .overlay.selected {
+        outline: 2px solid #4a90e2;
+        z-index: 1000;
+      }
+      .resize-handle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: #4a90e2;
+        border: 2px solid white;
+        border-radius: 50%;
+        display: none;
+      }
+      .overlay.selected .resize-handle {
+        display: block;
+      }
+      .resize-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+      .resize-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+      .resize-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+      .resize-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+      #font-slider-panel {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: none;
+        z-index: 2000;
+        min-width: 300px;
+      }
+      #font-slider-panel.visible {
+        display: block;
+      }
+      #font-slider {
+        width: 200px;
+        margin: 0 10px;
       }
 
       /* DATE — grey strip between navy header and white body */
@@ -782,6 +827,14 @@
           <div class="overlay" id="ov-cemetery"><span id="p-proc"></span></div>
         </div>
       </div>
+      
+      <div id="font-slider-panel">
+        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;" id="slider-label">Font Size</label>
+        <div style="display: flex; align-items: center;">
+          <span id="font-size-display" style="min-width: 45px; font-size: 14px;">--px</span>
+          <input type="range" id="font-slider" min="10" max="120" step="1" value="40">
+        </div>
+      </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1039,6 +1092,126 @@
           document.getElementById("p-date-right").textContent = "";
         }
       }
+
+      // Interactive Editing System
+      let selectedOverlay = null;
+      let dragData = null;
+      let resizeData = null;
+
+      document.querySelectorAll('.overlay').forEach(ov => {
+        ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+          const handle = document.createElement('div');
+          handle.className = `resize-handle ${pos}`;
+          handle.addEventListener('mousedown', (e) => startResize(e, ov, pos));
+          ov.appendChild(handle);
+        });
+        ov.addEventListener('mousedown', (e) => {
+          if (e.target.classList.contains('resize-handle')) return;
+          selectOverlay(ov);
+          startDrag(e, ov);
+        });
+      });
+
+      function selectOverlay(ov) {
+        if (selectedOverlay) selectedOverlay.classList.remove('selected');
+        selectedOverlay = ov;
+        ov.classList.add('selected');
+        const span = ov.querySelector('span');
+        const currentSize = parseInt(window.getComputedStyle(span).fontSize);
+        document.getElementById('font-slider').value = currentSize;
+        document.getElementById('font-size-display').textContent = currentSize + 'px';
+        document.getElementById('slider-label').textContent = ov.id.replace('ov-', '').toUpperCase() + ' Font Size';
+        document.getElementById('font-slider-panel').classList.add('visible');
+      }
+
+      function startDrag(e, ov) {
+        e.preventDefault();
+        const notice = document.getElementById('notice');
+        const rect = notice.getBoundingClientRect();
+        const ovRect = ov.getBoundingClientRect();
+        dragData = {
+          ov: ov,
+          startX: e.clientX,
+          startY: e.clientY,
+          startTop: ((ovRect.top - rect.top) / rect.height) * 100,
+          startLeft: ((ovRect.left - rect.left) / rect.width) * 100,
+          startRight: ((rect.right - ovRect.right) / rect.width) * 100,
+          startHeight: (ovRect.height / rect.height) * 100
+        };
+      }
+
+      function startResize(e, ov, corner) {
+        e.preventDefault();
+        e.stopPropagation();
+        const notice = document.getElementById('notice');
+        const rect = notice.getBoundingClientRect();
+        const ovRect = ov.getBoundingClientRect();
+        resizeData = {
+          ov: ov,
+          corner: corner,
+          startX: e.clientX,
+          startY: e.clientY,
+          startTop: ((ovRect.top - rect.top) / rect.height) * 100,
+          startLeft: ((ovRect.left - rect.left) / rect.width) * 100,
+          startRight: ((rect.right - ovRect.right) / rect.width) * 100,
+          startHeight: (ovRect.height / rect.height) * 100,
+          noticeWidth: rect.width,
+          noticeHeight: rect.height
+        };
+      }
+
+      document.addEventListener('mousemove', (e) => {
+        if (dragData) {
+          const notice = document.getElementById('notice');
+          const rect = notice.getBoundingClientRect();
+          const dx = ((e.clientX - dragData.startX) / rect.width) * 100;
+          const dy = ((e.clientY - dragData.startY) / rect.height) * 100;
+          dragData.ov.style.top = (dragData.startTop + dy) + '%';
+          dragData.ov.style.left = (dragData.startLeft + dx) + '%';
+          dragData.ov.style.right = (dragData.startRight - dx) + '%';
+        }
+        if (resizeData) {
+          const dx = ((e.clientX - resizeData.startX) / resizeData.noticeWidth) * 100;
+          const dy = ((e.clientY - resizeData.startY) / resizeData.noticeHeight) * 100;
+          if (resizeData.corner.includes('n')) {
+            resizeData.ov.style.top = (resizeData.startTop + dy) + '%';
+            resizeData.ov.style.height = (resizeData.startHeight - dy) + '%';
+          }
+          if (resizeData.corner.includes('s')) {
+            resizeData.ov.style.height = (resizeData.startHeight + dy) + '%';
+          }
+          if (resizeData.corner.includes('w')) {
+            resizeData.ov.style.left = (resizeData.startLeft + dx) + '%';
+            resizeData.ov.style.right = (resizeData.startRight - dx) + '%';
+          }
+          if (resizeData.corner.includes('e')) {
+            resizeData.ov.style.right = (resizeData.startRight - dx) + '%';
+          }
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        dragData = null;
+        resizeData = null;
+      });
+
+      document.getElementById('font-slider').addEventListener('input', (e) => {
+        if (!selectedOverlay) return;
+        const size = e.target.value;
+        const span = selectedOverlay.querySelector('span');
+        span.style.fontSize = size + 'px';
+        document.getElementById('font-size-display').textContent = size + 'px';
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.overlay') && !e.target.closest('#font-slider-panel')) {
+          if (selectedOverlay) {
+            selectedOverlay.classList.remove('selected');
+            selectedOverlay = null;
+            document.getElementById('font-slider-panel').classList.remove('visible');
+          }
+        }
+      });
 
       function getHijriDate(gDate) {
         const jd = Math.floor(gDate / 86400000 + 2440587.5);
