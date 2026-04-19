@@ -329,16 +329,31 @@
       /* NOTICE — overlay on template image */
       #notice {
         position: relative;
-        width: 100%;
-        max-width: 540px;
-        height: 0;
-        padding-bottom: 177.78%;
+        width: 1080px;
+        height: 1920px;
+        transform-origin: top center;
+        transform: scale(0.5);
         flex-shrink: 0;
         font-family: "Open Sans", sans-serif;
         border-radius: 6px;
         overflow: hidden;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
         line-height: 1;
+      }
+      @media (max-width: 1200px) {
+        #notice {
+          transform: scale(0.4);
+        }
+      }
+      @media (max-width: 900px) {
+        #notice {
+          transform: scale(0.35);
+        }
+      }
+      @media (max-width: 700px) {
+        #notice {
+          transform: scale(0.28);
+        }
       }
       #notice .bg-img {
         position: absolute;
@@ -377,9 +392,16 @@
         border: 2px solid white;
         border-radius: 50%;
         display: none;
+        pointer-events: auto;
       }
       .overlay.selected .resize-handle {
         display: block;
+      }
+      /* Hide UI elements from html2canvas */
+      .resize-handle,
+      .overlay.selected {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       .resize-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
       .resize-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
@@ -420,6 +442,11 @@
         font-weight: 700;
         color: #1a2a10;
         letter-spacing: 0.3px;
+        cursor: default !important;
+        pointer-events: none;
+      }
+      #ov-date:hover {
+        outline: none !important;
       }
 
       /* NAME */
@@ -486,7 +513,7 @@
         height: 8%;
         left: 72%;
         right: 0%;
-        font-size: 90px;
+        font-size: 65px;
         color: #1a2a10;
         display: flex;
         align-items: center;
@@ -520,7 +547,7 @@
         height: 10%;
         left: 72%;
         right: 0%;
-        font-size: clamp(45px, 8.3vw, 90px);
+        font-size: 65px;
         color: #1a2a10;
         display: flex;
         align-items: center;
@@ -536,7 +563,7 @@
         height: 2.5%;
         left: 30%;
         right: 2%;
-        font-size: 38px;
+        font-size: 48px;
         color: #000;
         text-align: left;
         align-items: center;
@@ -550,7 +577,7 @@
       #ov-timechange {
         font-family: "Intelo", sans-serif;
         font-weight: 700;
-        top: 55%;
+        top: 59%;
         height: 3%;
         left: 72%;
         right: 0%;
@@ -566,7 +593,7 @@
       #ov-timeupdate {
         font-family: "Intelo", sans-serif;
         font-weight: 700;
-        top: 55%;
+        top: 70%;
         height: 3%;
         left: 72%;
         right: 0%;
@@ -582,7 +609,7 @@
       #ov-conjunction {
         font-family: "Intelo", sans-serif;
         font-weight: 600;
-        top: 70%;
+        top: 71%;
         height: 5%;
         left: 5%;
         right: 40%;
@@ -1053,8 +1080,8 @@
         procEl.textContent = (
           document.getElementById("f-proc").value || ""
         ).toUpperCase();
-        procEl.style.fontSize = "";
-        shrinkIfOverflow(procEl);
+        procEl.style.fontSize = "48px"; // Start at 48px
+        shrinkIfOverflow(procEl); // Allow shrinking if text is too long
 
         // Date
         buildDate();
@@ -1062,34 +1089,28 @@
 
       function buildDate() {
         const val = document.getElementById("f-date").value;
+        const leftDate = document.getElementById("p-date-left");
+        const rightDate = document.getElementById("p-date-right");
+        
         if (!val) {
-          document.getElementById("p-date-left").textContent = "";
-          document.getElementById("p-date-right").textContent = "";
+          leftDate.textContent = "";
+          rightDate.textContent = "";
           return;
         }
+        
         const [y, m, d] = val.split("-").map(Number);
         const months = [
-          "JANUARY",
-          "FEBRUARY",
-          "MARCH",
-          "APRIL",
-          "MAY",
-          "JUNE",
-          "JULY",
-          "AUGUST",
-          "SEPTEMBER",
-          "OCTOBER",
-          "NOVEMBER",
-          "DECEMBER",
+          "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+          "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
         ];
+        
         const greg = `${d} ${months[m - 1]} ${y}`;
-        document.getElementById("p-date-left").textContent = greg;
+        leftDate.textContent = greg;
+        
         if (document.getElementById("f-hijri").checked) {
-          document.getElementById("p-date-right").textContent = getHijriDate(
-            new Date(y, m - 1, d),
-          );
+          rightDate.textContent = getHijriDate(new Date(y, m - 1, d));
         } else {
-          document.getElementById("p-date-right").textContent = "";
+          rightDate.textContent = "";
         }
       }
 
@@ -1099,6 +1120,9 @@
       let resizeData = null;
 
       document.querySelectorAll('.overlay').forEach(ov => {
+        // Skip date overlay - it doesn't need interactive editing
+        if (ov.id === 'ov-date') return;
+        
         ['nw', 'ne', 'sw', 'se'].forEach(pos => {
           const handle = document.createElement('div');
           handle.className = `resize-handle ${pos}`;
@@ -1267,6 +1291,12 @@
       }
 
       function downloadImg() {
+        // Deselect any selected overlay and hide UI elements
+        if (selectedOverlay) {
+          selectedOverlay.classList.remove('selected');
+        }
+        document.getElementById('font-slider-panel').classList.remove('visible');
+        
         const notice = document.getElementById("notice");
 
         // Fixed output dimensions — aspect ratio matches padding-bottom:177.78% (9:16)
